@@ -482,8 +482,117 @@ function EC2_DescribeAddresses($creds)
    write_to_data_file("$zabbix_name IP_Addresses_Standard $ip_address_standard");
 }   
 //-------------------------------------------------------------------------//
+
    
-   
+//-------------------------------------------------------------------------//
+// EC2_DescribeVpcs 
+//-------------------------------------------------------------------------//
+function EC2_DescribeVpcs($creds) 
+{
+
+   $zabbix_name = $creds['zabbix_name'] ;
+
+   $xml_object =  exec_ec2_query($creds, 'DescribeVpcs') ;
+
+   debug_output(__FILE__ . ':' .
+                __FUNCTION__ . ':' .
+                __LINE__ . ':' .
+                "HTTP result received from EC2 for DescribeVpcs = " . var_export($xml_object, true) ) ;
+
+	$vpc_count = 0;
+	$vpc_available = 0;
+	foreach ($xml_object->vpcSet as $vpcSet) {
+		if (empty($vpcSet)) {
+		break;
+		}	
+		foreach ($vpcSet->item as $item) {
+			$vpc_count++;
+			if ($item->state == 'available') {
+				$vpc_available++;
+			}
+		}
+	}
+
+	// Print all the data to be sent to Zabbix
+	write_to_data_file("$zabbix_name VPC_Count_Total $vpc_count");
+	write_to_data_file("$zabbix_name VPC_Available_Total $vpc_available");
+
+}
+ 
+//-------------------------------------------------------------------------//
+// EC2_DescribeVpnConnections
+//-------------------------------------------------------------------------//
+function EC2_DescribeVpnConnections($creds) 
+{
+
+   $zabbix_name = $creds['zabbix_name'] ;
+
+   $xml_object =  exec_ec2_query($creds, 'DescribeVpnConnections') ;
+
+   debug_output(__FILE__ . ':' .
+                __FUNCTION__ . ':' .
+                __LINE__ . ':' .
+                "HTTP result received from EC2 for DescribeVpnConnections = " . var_export($xml_object, true) ) ;
+
+	//print_r($xml_object);
+	$vpn_connection_count = 0;
+	$vpn_connection_available = 0;
+	foreach ($xml_object->vpnConnectionSet->item as $vpnConnectionSet) {
+		if(empty($vpnConnectionSet)){
+		break;
+		}
+		foreach($vpnConnectionSet->vpnConnectionId as $vpnConnectionId){
+			$vpn_connection_count++;
+		}	
+		foreach($vpnConnectionSet->state as $state){
+			if($state == 'available'){
+				$vpn_connection_available++;
+			}
+		}
+	}
+
+	// Print all the data to be sent to Zabbix
+	write_to_data_file("$zabbix_name VPN_Connection_Count_Total $vpn_connection_count");
+	write_to_data_file("$zabbix_name VPN_Connection_Available $vpn_connection_available");
+}
+
+//-------------------------------------------------------------------------//
+// EC2_DescribeVpnConnections
+//-------------------------------------------------------------------------//
+function EC2_DescribeCustomerGateways($creds) 
+{
+
+   $zabbix_name = $creds['zabbix_name'] ;
+
+   $xml_object =  exec_ec2_query($creds, 'DescribeCustomerGateways') ;
+
+   debug_output(__FILE__ . ':' .
+                __FUNCTION__ . ':' .
+                __LINE__ . ':' .
+                "HTTP result received from EC2 for DescribeCustomerGateways = " . var_export($xml_object, true) ) ;
+
+	//print_r($xml_object);
+	$customer_gateway_count = 0;
+	$customer_gateway_available = 0;
+	foreach($xml_object->customerGatewaySet->item as $customerGatewaySet){
+		if(empty($customerGatewaySet)){
+		break;
+		}
+		foreach($customerGatewaySet->customerGatewayId as $customerGatewayId){
+			$customer_gateway_count++;
+		}
+		foreach($customerGatewaySet->state as $customerGatewayState){
+			if($customerGatewayState == 'available'){
+				$customer_gateway_available++;
+			}
+		}
+	}
+
+	// Print all the data to be sent to Zabbix
+	write_to_data_file("$zabbix_name Customer_Gateway_Count_Total $customer_gateway_count");
+	write_to_data_file("$zabbix_name Customer_Gateway_Available $customer_gateway_available");
+	
+}
 //-------------------------------------------------------------------------//
 // EC2_DescribeReservedInstances 
 //-------------------------------------------------------------------------//
@@ -716,6 +825,9 @@ $start_time = time() ;
 EC2_DescribeImages($creds) ;
 EC2_DescribeInstances($creds) ;
 EC2_DescribeAddresses($creds) ;
+EC2_DescribeVpcs($creds) ;
+EC2_DescribeVpnConnections($creds);
+EC2_DescribeCustomerGateways($creds);
 EC2_DescribeReservedInstances($creds) ;
 EC2_DescribeSnapshots($creds) ;
 EC2_DescribeVolumes($creds) ;
