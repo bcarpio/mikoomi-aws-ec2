@@ -557,7 +557,7 @@ function EC2_DescribeVpnConnections($creds)
 }
 
 //-------------------------------------------------------------------------//
-// EC2_DescribeVpnConnections
+// EC2_DescribeCustomerGateways
 //-------------------------------------------------------------------------//
 function EC2_DescribeCustomerGateways($creds) 
 {
@@ -592,6 +592,42 @@ function EC2_DescribeCustomerGateways($creds)
 	write_to_data_file("$zabbix_name Customer_Gateway_Count_Total $customer_gateway_count");
 	write_to_data_file("$zabbix_name Customer_Gateway_Available $customer_gateway_available");
 	
+}
+//-------------------------------------------------------------------------//
+// EC2_DescribeAvailabilityZones
+//-------------------------------------------------------------------------//
+function EC2_DescribeAvailabilityZones($creds) 
+{
+
+   $zabbix_name = $creds['zabbix_name'] ;
+
+   $xml_object =  exec_ec2_query($creds, 'DescribeAvailabilityZones') ;
+
+   debug_output(__FILE__ . ':' .
+                __FUNCTION__ . ':' .
+                __LINE__ . ':' .
+                "HTTP result received from EC2 for DescribeAvailabilityZones = " . var_export($xml_object, true) ) ;
+
+	//print_r($xml_object);
+	$az_count = 0;
+	$az_available_count = 0;
+
+	foreach($xml_object->availabilityZoneInfo->item as $availabilityZoneInfo){
+		if(empty($availabilityZoneInfo)){
+		break;
+		}
+		foreach($availabilityZoneInfo->zoneName as $zoneName){
+			$az_count++;
+		}
+		foreach($availabilityZoneInfo->zoneState as $zoneState){
+			if($zoneState == 'available'){
+			$az_available_count++;
+			}
+		}
+	}
+	// Print all the data to be sent to Zabbix
+	write_to_data_file("$zabbix_name Availability_Zone_Count_Total $az_count");
+	write_to_data_file("$zabbix_name Availability_Zone_Count_Available $az_available_count");
 }
 //-------------------------------------------------------------------------//
 // EC2_DescribeReservedInstances 
@@ -828,6 +864,7 @@ EC2_DescribeAddresses($creds) ;
 EC2_DescribeVpcs($creds) ;
 EC2_DescribeVpnConnections($creds);
 EC2_DescribeCustomerGateways($creds);
+EC2_DescribeAvailabilityZones($creds);
 EC2_DescribeReservedInstances($creds) ;
 EC2_DescribeSnapshots($creds) ;
 EC2_DescribeVolumes($creds) ;
